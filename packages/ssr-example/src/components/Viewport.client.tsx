@@ -1,4 +1,4 @@
-import { createSignal, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 
 export default () => {
   const [size, setSize] = createSignal("...");
@@ -7,7 +7,8 @@ export default () => {
     const update = () => setSize(`${window.innerWidth}x${window.innerHeight}`);
     update();
     window.addEventListener("resize", update);
+    onCleanup(() => window.removeEventListener("resize", update));
   });
 
-  return <span class="text-white text-lg font-bold">{size()}</span>;
+  return <output class="viewport-output" aria-label="Browser viewport">{size()}</output>;
 };

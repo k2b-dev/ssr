@@ -5,6 +5,13 @@ export default ({ initial = 0 }: { initial?: number }) => {
 
   onMount(() => {
     const handler = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        return;
+      }
       if (e.key === "+") setCount((c) => c + 1);
       if (e.key === "-") setCount((c) => c - 1);
       if (e.key === "0") setCount(0);
@@ -14,19 +21,21 @@ export default ({ initial = 0 }: { initial?: number }) => {
   });
 
   return (
-    <div class="flex items-center gap-1">
+    <div class="counter">
       <button
+        type="button"
+        aria-label="Decrease counter"
         onClick={() => setCount((c) => c - 1)}
-        class="border border-neutral-700 w-10 h-10 text-neutral-300 hover:bg-neutral-800 hover:text-white cursor-pointer text-lg"
       >
-        -
+        −
       </button>
-      <span class="text-white w-12 text-center text-lg font-bold">
+      <output aria-label={`Counter value ${count()}`}>
         {count()}
-      </span>
+      </output>
       <button
+        type="button"
+        aria-label="Increase counter"
         onClick={() => setCount((c) => c + 1)}
-        class="border border-neutral-700 w-10 h-10 text-neutral-300 hover:bg-neutral-800 hover:text-white cursor-pointer text-lg"
       >
         +
       </button>

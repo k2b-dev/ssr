@@ -1,72 +1,72 @@
 import { ssr } from "../../config";
+import { ManualSection, ManualShell } from "./ManualShell";
 
 export default ssr(async (c) => {
-  c.get("page").title = "About";
+  c.get("page").title = "Architecture · @k2b/ssr";
 
   return () => (
-    <main class="min-h-screen bg-neutral-950 text-neutral-300 font-mono p-6 text-sm">
-      <div class="max-w-2xl mx-auto">
-        <div class="border border-neutral-600 p-4 mb-6">
-          <h1 class="text-lg text-white font-bold">About</h1>
-        </div>
+    <ManualShell
+      active="architecture"
+      title="architecture"
+      summary="The filename states which runtime owns a component."
+    >
+      <ManualSection label="DESCRIPTION">
+        <p>
+          Routes render SolidJS components into complete HTML. Interactive
+          islands are rendered on the server and continue in the browser with
+          serialized props. Client components mount only in the browser.
+        </p>
+      </ManualSection>
 
-        <div class="border border-neutral-800 mb-4">
-          <div class="border-b border-neutral-800 px-4 py-2 bg-neutral-900">
-            <span class="text-neutral-400">overview</span>
+      <ManualSection label="FILES">
+        <dl class="definition-list definition-list--files">
+          <div>
+            <dt>
+              <mark>*.tsx</mark>
+            </dt>
+            <dd>Server-only page and layout components</dd>
+            <dd class="definition-list__meta">render</dd>
           </div>
-          <div class="p-4">
-            <p class="text-neutral-400">
-              SSR with islands architecture using @k2b/ssr. Pages are
-              server-rendered as static HTML, interactive components are
-              hydrated on the client.
-            </p>
+          <div>
+            <dt>
+              <mark>*.island.tsx</mark>
+            </dt>
+            <dd>Server markup with scoped interactive state</dd>
+            <dd class="definition-list__meta">rerender</dd>
           </div>
-        </div>
+          <div>
+            <dt>
+              <mark>*.client.tsx</mark>
+            </dt>
+            <dd>Browser-only components for platform APIs</dd>
+            <dd class="definition-list__meta">mount</dd>
+          </div>
+        </dl>
+      </ManualSection>
 
-        <div class="border border-neutral-800 mb-6">
-          <div class="border-b border-neutral-800 px-4 py-2 bg-neutral-900">
-            <span class="text-neutral-400">component types</span>
-          </div>
-          <div class="p-4 space-y-2">
-            <div>
-              <span class="text-white">*.island.tsx</span>
-              <span class="text-neutral-600 mx-2">-</span>
-              <span class="text-neutral-400">hydrated, SSR preserved</span>
-            </div>
-            <div>
-              <span class="text-white">*.client.tsx</span>
-              <span class="text-neutral-600 mx-2">-</span>
-              <span class="text-neutral-400">client-only, no SSR</span>
-            </div>
-            <div>
-              <span class="text-white">*.tsx</span>
-              <span class="text-neutral-600 mx-2">-</span>
-              <span class="text-neutral-400">static, server-only</span>
-            </div>
-          </div>
-        </div>
+      <ManualSection label="SEQUENCE">
+        <ol class="sequence">
+          <li>
+            <code>01</code>
+            <span>Hono resolves the request and page data.</span>
+          </li>
+          <li>
+            <code>02</code>
+            <span>Solid renders the complete response body.</span>
+          </li>
+          <li>
+            <code>03</code>
+            <span>Only named island and client entries reach the browser.</span>
+          </li>
+        </ol>
+      </ManualSection>
 
-        <div class="flex gap-4">
-          <a
-            href="/"
-            class="border border-neutral-700 px-4 py-2 text-neutral-400 hover:bg-neutral-900 hover:text-white"
-          >
-            [home]
-          </a>
-          <a
-            href="/api-test"
-            class="border border-neutral-700 px-4 py-2 text-neutral-400 hover:bg-neutral-900 hover:text-white"
-          >
-            [api-test]
-          </a>
-          <a
-            href="/nav-demo"
-            class="border border-neutral-700 px-4 py-2 text-neutral-400 hover:bg-neutral-900 hover:text-white"
-          >
-            [nav-demo]
-          </a>
-        </div>
-      </div>
-    </main>
+      <ManualSection label="BOUNDARY">
+        <p>
+          Island props cross a serialization boundary. Pass data values, not
+          functions, signals, DOM nodes or class instances.
+        </p>
+      </ManualSection>
+    </ManualShell>
   );
 });
