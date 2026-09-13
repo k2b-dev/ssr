@@ -269,8 +269,11 @@ describe("SSR dev reload client", () => {
 
       const firstRealm = firstPage.mainFrame.window;
       firstRealm.dispatchEvent(new firstRealm.Event("pagehide"));
-      await flushPromises();
-      await flushPromises();
+      // Cross-realm lock release spans event-loop turns; two microtasks are
+      // not a completion signal on every runtime/platform.
+      for (let attempt = 0; attempt < 100 && FakeEventSource.instances.length < 2; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+      }
 
       expect(FakeEventSource.instances).toHaveLength(2);
       expect(FakeEventSource.instances[0]!.closed).toBe(true);
