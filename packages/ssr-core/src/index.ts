@@ -47,6 +47,8 @@ export type SsrOptions<T extends object = object> = {
   verbose?: boolean;
   /** Project root for island discovery and dev _ssr assets (default: process.cwd()) */
   rootDir?: string;
+  /** Discovery roots relative to rootDir (absolute paths allowed). Replaces the default rootDir scan. */
+  componentRoots?: readonly string[];
   /** Public app mount path for SSR assets and dev endpoints (default: "") */
   basePath?: string;
   /** Modules to exclude from the island bundle (passed to Bun.build) */
@@ -121,6 +123,7 @@ export const createConfig = <T extends object = object>(options: SsrOptions<T> =
     devSourcemap = "linked",
     template,
     rootDir: rootDirOption,
+    componentRoots,
     basePath: basePathOption,
   } = options;
   const rootDir = resolve(rootDirOption ?? process.cwd());
@@ -208,6 +211,7 @@ export const createConfig = <T extends object = object>(options: SsrOptions<T> =
             pattern: COMPONENT_PATTERN,
             outdir: islandsOutdir,
             cwd: rootDir,
+            componentRoots,
             verbose: verbose ?? !dev,
             dev,
             devSourcemap,

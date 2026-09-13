@@ -309,6 +309,7 @@ createConfig({
   dev?: boolean;         // default: false
   verbose?: boolean;     // default: !dev
   rootDir?: string;      // default: process.cwd()
+  componentRoots?: readonly string[]; // explicit island/client discovery directories
   basePath?: string;     // default: "", example: "/docs"
   external?: string[];   // passed to Bun.build for island bundle
   devSourcemap?: "none" | "linked" | "inline"; // default: "linked"
@@ -319,6 +320,18 @@ createConfig({
 ### Notes
 
 - `rootDir` is important in monorepos where server entrypoint and island files live in different packages.
+- `componentRoots` replaces the discovery scan with explicit directories. Relative paths resolve against `rootDir`; absolute paths support installed framework packages. Omit it to scan `rootDir`, or pass `[]` to scan nothing. Missing directories fail the build. Symlinks and overlapping roots are deduplicated by canonical path; nested `node_modules` and `.git` directories are skipped. Select an installed package directory explicitly to scan its components.
+- Solid core, web, and store imports use the app's dependency and the selected build mode consistently, including components imported from installed packages.
+- `rootDir` still controls component IDs and the development asset directory. All selected components share one browser build. Ordinary component libraries with browser/SSR exports (such as `@k2b/ui`) are resolved through imports and do not need discovery roots. Do not scan their examples or test fixtures.
+
+```ts
+createConfig({
+  rootDir: workspaceRoot,
+  componentRoots: ["packages/my-app/src", frameworkSourceDir],
+});
+```
+
+Use the same configuration in development and production. Files outside `rootDir` retain the existing canonical absolute-path ID fallback; moving an external package can change its IDs. SSR wrappers and browser assets must come from the same build.
 - `basePath` moves SSR assets and dev endpoints under that prefix, e.g. `/docs/_ssr`.
 - Development builds emit linked source maps by default. Use `"inline"` only when a tool requires embedded maps, or `"none"` to disable them.
 - In production, hydration imports include a build timestamp query (`?v=...`) for cache busting.

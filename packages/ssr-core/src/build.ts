@@ -2,11 +2,12 @@
  * Island bundler - discovers *.island.tsx and *.client.tsx files,
  * transforms them for the browser, and outputs chunks to _ssr directory.
  */
-import { relative, resolve } from "path";
+import { join, relative, resolve } from "path";
 import { Glob } from "bun";
-import { unlink } from "fs/promises";
+import { readdir, stat, unlink } from "fs/promises";
+import { existsSync } from "fs";
 import { transform } from "./transform";
-import { ISLAND_ID_LENGTH, islandIdFromFile, toStableKey } from "./island-id";
+import { ISLAND_ID_LENGTH, canonicalFilePath, islandIdFromFile, toStableKey } from "./island-id";
 
 type ComponentType = "island" | "client";
 
@@ -89,34 +90,48 @@ export const buildIslands = async (options: {
   pattern: string;
   outdir: string;
   cwd: string;
+  componentRoots?: readonly string[];
   verbose: boolean;
   dev?: boolean;
   devSourcemap?: DevSourcemap;
   external?: string[];
 }): Promise<void> => {
-  const { pattern, outdir, cwd, verbose, dev = false, devSourcemap = "linked", external } = options;
+  const { pattern, outdir, cwd, componentRoots, verbose, dev = false, devSourcemap = "linked", external } = options;
   const resolvedCwd = resolve(cwd);
 
   const totalStart = performance.now();
 
-  const files: string[] = [];
+  const files = new Set<string>();
 
   const scanStart = performance.now();
-  for await (const file of new Glob(pattern).scan({
-    cwd: resolvedCwd,
-    absolute: true,
-  })) {
-    files.push(file);
+  const visited = new Set<string>();
+  const matcher = new Glob(pattern);
+  const scan = async (directory: string, scanRoot: string): Promise<void> => {
+    const canonical = canonicalFilePath(directory);
+    if (visited.has(canonical)) return;
+    visited.add(canonical);
+    for (const entry of await readdir(canonical, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === ".git") continue;
+      const path = join(canonical, entry.name);
+      const info = entry.isSymbolicLink() ? await stat(path) : entry;
+      if (info.isDirectory()) await scan(path, scanRoot);
+      else if (info.isFile() && matcher.match(relative(scanRoot, path))) files.add(canonicalFilePath(path));
+    }
+  };
+  for (const root of componentRoots ?? [resolvedCwd]) {
+    const scanRoot = canonicalFilePath(resolve(resolvedCwd, root));
+    await scan(scanRoot, scanRoot);
   }
-  if (verbose) console.log(`Scan: found ${files.length} file(s) in ${fmt(performance.now() - scanStart)}`);
+  if (verbose) console.log(`Scan: found ${files.size} file(s) in ${fmt(performance.now() - scanStart)}`);
 
-  if (!files.length) {
+  if (!files.size) {
+    if (existsSync(outdir)) await removeStaleBuildAssets(outdir, []);
     if (verbose) console.log("No island/client files found.");
     return;
   }
 
   // Build component metadata
-  const components = files.map((componentPath) => {
+  const components = [...files].map((componentPath) => {
     const id = islandIdFromFile(componentPath, resolvedCwd);
     const key = toStableKey(componentPath, resolvedCwd);
     const type = getComponentType(componentPath);
@@ -153,6 +168,7 @@ export const buildIslands = async (options: {
     outdir,
     naming: { entry: "[name].js", chunk: "chunk-[hash].js" },
     target: "browser",
+    conditions: ["browser", dev ? "development" : "production"],
     external,
     minify: !dev,
     splitting: true,
@@ -161,6 +177,15 @@ export const buildIslands = async (options: {
       {
         name: "solid-islands",
         setup(build) {
+          // Core, DOM and store must use the app's Solid copy and the same mode.
+          // Explicit exported entries avoid mixing a production core with
+          // development store/web modules from the host process conditions.
+          build.onResolve({ filter: /^solid-js(?:\/(?:web|store))?$/ }, (args) => {
+            const module = args.path === "solid-js" ? "solid" : args.path.slice("solid-js/".length);
+            const entry = `${args.path}/dist/${dev ? "dev" : module}.js`;
+            return { path: Bun.resolveSync(entry, resolvedCwd) };
+          });
+
           // Resolve component IDs as virtual entrypoints
           build.onResolve({ filter: new RegExp(`^[a-f0-9]{${ISLAND_ID_LENGTH}}$`) }, (args) => ({
             path: args.path,
@@ -220,7 +245,7 @@ export const buildIslands = async (options: {
     }
   }
   console.log(
-    `Built ${files.length} component(s) to ${outdir}/ in ${fmt(performance.now() - totalStart)}${verbose ? " (total)" : ""}`,
+    `Built ${files.size} component(s) to ${outdir}/ in ${fmt(performance.now() - totalStart)}${verbose ? " (total)" : ""}`,
   );
 
   if (!result.success) {

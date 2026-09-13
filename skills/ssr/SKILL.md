@@ -163,6 +163,7 @@ createConfig({
   dev?: boolean;
   verbose?: boolean;
   rootDir?: string;
+  componentRoots?: readonly string[];
   basePath?: string;
   external?: string[];
   devSourcemap?: "none" | "linked" | "inline";
@@ -172,7 +173,9 @@ createConfig({
 
 Notes:
 
-- set `rootDir` when your config and island files live in different workspace packages
+- keep `rootDir` as the stable ID and asset base; use `componentRoots` to select app and shared framework source directories without scanning sibling apps
+- explicit `componentRoots` replace the default scan; relative paths resolve against `rootDir`, absolute package paths are supported, `[]` selects nothing, and missing paths fail
+- ordinary UI libraries with browser/SSR exports are bundled through imports and need no discovery root; explicitly select only packages that ship island/client source files
 - `basePath` moves SSR asset URLs and dev endpoints under that public prefix
 - development builds use linked source maps by default; use `devSourcemap: "inline"` only for tools that require embedded maps
 - stable development entries and source maps revalidate; content-hashed chunks and all production assets use immutable caching

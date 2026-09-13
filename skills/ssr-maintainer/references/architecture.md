@@ -12,7 +12,7 @@
 
 `buildIslands()` in `src/build.ts`:
 
-1. Scan `**/*.{island,client}.tsx` from `rootDir`
+1. Scan `**/*.{island,client}.tsx` from explicit `componentRoots`, defaulting to `rootDir`; canonical paths deduplicate symlinks and overlapping roots. IDs remain relative to `rootDir`, with the existing absolute fallback for external files.
 2. Generate stable IDs with `islandIdFromFile()`
 3. Fail fast on collisions
 4. Run one `Bun.build()` pass with virtual island entrypoints and `splitting: true`

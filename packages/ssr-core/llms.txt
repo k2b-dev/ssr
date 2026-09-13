@@ -60,6 +60,15 @@ Monorepo root:
 
 Use this when entrypoint package differs from island package location.
 
+`createConfig({ componentRoots })` replaces discovery with explicit directories.
+Relative paths resolve against `rootDir`; absolute package paths are supported.
+Omit the option to scan `rootDir`; `[]` selects nothing. Missing roots fail.
+Canonical paths deduplicate overlapping and symlinked roots. Nested node_modules
+and .git directories are excluded; installed packages must be selected explicitly.
+`rootDir` remains authoritative for IDs and the development asset directory.
+Ordinary browser/SSR component libraries are bundled through imports, not scanned.
+Use the same selection for development and production.
+
 ## Hono helper
 
 `createSSRHandler(html)` enables pages as:
