@@ -336,6 +336,7 @@ Use the same configuration in development and production. Files outside `rootDir
 - Development builds emit linked source maps by default. Use `"inline"` only when a tool requires embedded maps, or `"none"` to disable them.
 - In production, hydration imports include a build timestamp query (`?v=...`) for cache busting.
 - All adapters stream island assets from `Bun.file`. Production assets and content-hashed development chunks are immutable; stable development entries and source maps use validators for inexpensive freshness checks.
+- Production adapters serve adjacent `.br` or `.gz` files when accepted by the request, preserving the original MIME type and varying caches by `Accept-Encoding`. Generate these siblings in the application build; the adapter does not compress responses at runtime. Development always serves the original file to avoid stale compressed copies.
 
 ## Microfrontend mount example
 

@@ -37,6 +37,21 @@ export const getSsrDir = (config: SsrConfig): string =>
 const HASHED_CHUNK = /^chunk-[a-z0-9]+\.js$/i;
 const ASSET_FILE = /^[a-z0-9._-]+\.js(?:\.map)?$/i;
 
+const acceptedEncodings = (header: string | null): Array<"br" | "gzip" | "identity"> => {
+  const qualities = new Map<string, number>();
+  for (const part of header?.split(",") ?? []) {
+    const [name, ...parameters] = part.trim().toLowerCase().split(";");
+    if (!name) continue;
+    const q = parameters.map((parameter) => parameter.trim()).find((parameter) => parameter.startsWith("q="));
+    const quality = q === undefined ? 1 : Number(q.slice(2));
+    qualities.set(name, Number.isFinite(quality) && quality >= 0 && quality <= 1 ? quality : 0);
+  }
+  const quality = (encoding: string) => qualities.get(encoding) ??
+    (encoding === "identity" ? (qualities.get("*") === 0 ? 0 : 1) : qualities.get("*") ?? 0);
+  return (["br", "gzip", "identity"] as const).filter((encoding) => quality(encoding) > 0)
+    .sort((left, right) => quality(right) - quality(left));
+};
+
 /**
  * Stable entry names can change during development. Content-hashed chunks
  * cannot, so the browser may retain them across page navigations.
@@ -85,9 +100,19 @@ export const createAssetResponse = async (
 
   const cacheControl = getCacheHeaders(dev, filename);
   if (!dev) {
-    return new Response(file, {
-      headers: { "Content-Type": contentType, "Cache-Control": cacheControl },
-    });
+    for (const encoding of acceptedEncodings(request.headers.get("Accept-Encoding"))) {
+      const selected = encoding === "identity" ? file : Bun.file(`${path}${encoding === "br" ? ".br" : ".gz"}`);
+      if (!(await selected.exists())) continue;
+      const headers = new Headers({
+        "Content-Type": contentType,
+        "Content-Length": String(selected.size),
+        "Cache-Control": cacheControl,
+        Vary: "Accept-Encoding",
+      });
+      if (encoding !== "identity") headers.set("Content-Encoding", encoding);
+      return new Response(request.method === "HEAD" ? null : selected, { headers });
+    }
+    return new Response(null, { status: 406, headers: { Vary: "Accept-Encoding" } });
   }
 
   const lastModified = file.lastModified;
@@ -102,7 +127,7 @@ export const createAssetResponse = async (
     return new Response(null, { status: 304, headers: validatorHeaders });
   }
 
-  return new Response(file, {
+  return new Response(request.method === "HEAD" ? null : file, {
     headers: { "Content-Type": contentType, ...validatorHeaders },
   });
 };
