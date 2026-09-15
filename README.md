@@ -2,6 +2,8 @@
 
 Minimal SSR + islands for SolidJS on Bun.
 
+Development and CI use Bun 1.4.2. Install workspace dependencies with `bun install --frozen-lockfile`.
+
 This monorepo contains the framework package and an example app. It focuses on server rendering, client re-rendered islands, and adapters for Bun, Hono, and Elysia.
 
 ## Packages

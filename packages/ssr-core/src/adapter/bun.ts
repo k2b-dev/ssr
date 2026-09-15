@@ -5,6 +5,7 @@
 import type { SsrConfig } from "../index";
 import {
   createAssetResponse,
+  getAssetPrefix,
   createPingResponse,
   getSsrDir,
   createReloadResponse,
@@ -30,6 +31,7 @@ type Routes = Record<string, RouteHandler>;
 export const routes = (config: SsrConfig): Routes => {
   const { dev, ssrPath } = config;
   const ssrDir = getSsrDir(config);
+  const assetPath = ssrPath + getAssetPrefix(dev);
 
   const devRoutes: Routes = dev
     ? {
@@ -39,13 +41,13 @@ export const routes = (config: SsrConfig): Routes => {
     : {};
 
   const serveAsset: RouteHandler = (req) => {
-    const filename = new URL(req.url).pathname.split("/").pop()!;
+    const filename = new URL(req.url).pathname.slice(assetPath.length + 1);
     return createAssetResponse(req, ssrDir, filename, dev);
   };
 
   return {
     ...devRoutes,
-    [`${ssrPath}/*.js`]: serveAsset,
-    [`${ssrPath}/*.js.map`]: serveAsset,
+    [`${assetPath}/*.js`]: serveAsset,
+    [`${assetPath}/*.js.map`]: serveAsset,
   };
 };

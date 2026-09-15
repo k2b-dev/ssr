@@ -102,7 +102,9 @@ Shared helpers live in `src/adapter/utils.ts`:
 
 ### Asset caching
 
-- production JavaScript and source maps are immutable
+- production URLs use `/_ssr/<build-timestamp>/<filename>` (with the configured base path); files remain flat in `_ssr/` on disk
+- all relative module imports inherit this version directory, including lazy chunks that import an entry; never version only entry imports with a query string
+- all adapters serve only the current version; production JavaScript and source maps are immutable
 - development `chunk-<hash>.js` files are immutable because their names are content-addressed
 - stable development entries and maps use `no-cache`, `ETag`, and `Last-Modified`
 - conditional development requests return `304` without reading the file body

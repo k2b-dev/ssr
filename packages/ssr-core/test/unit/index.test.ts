@@ -2,15 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { createConfig } from "../../src/index";
 
 describe("createConfig() cache busting", () => {
-  test("injects build version for production hydration imports", async () => {
+  test("versions the production module directory", async () => {
     const { html } = createConfig({ dev: false });
     const response = await html(() => "content" as any);
     const output = await response.text();
 
     expect(output).toContain("<style>solid-client,solid-island{display:contents}</style>");
-    expect(output).toMatch(/const v="\d+"/);
-    expect(output).toContain('const p="/_ssr"');
-    expect(output).toContain("import(p+'/'+e.dataset.id+'.js'+(v?'?v='+v:''))");
+    expect(output).toMatch(/const p="\/_ssr\/\d+"/);
+    expect(output).toContain("import(p+'/'+e.dataset.id+'.js')");
   });
 
   test("keeps hydration imports unversioned in dev mode", async () => {
@@ -18,7 +17,8 @@ describe("createConfig() cache busting", () => {
     const response = await html(() => "content" as any);
     const output = await response.text();
 
-    expect(output).toContain('const v=""');
+    expect(output).toContain('const p="/_ssr"');
+    expect(output).not.toContain("?v=");
   });
 
   test("uses basePath for hydration imports and dev config", async () => {
@@ -37,7 +37,7 @@ describe("createConfig() cache busting", () => {
     const response = await html(() => "content" as any);
     const output = await response.text();
 
-    expect(output).toContain('const p="/docs/_ssr"');
+    expect(output).toMatch(/const p="\/docs\/_ssr\/\d+"/);
   });
 
   test("rejects invalid basePath values", () => {

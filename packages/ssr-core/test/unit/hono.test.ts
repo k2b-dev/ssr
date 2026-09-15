@@ -300,7 +300,7 @@ describe("routes", () => {
   test("rejects asset requests without a filename before file serving", async () => {
     const assetRoutes = routes({ dev: false, basePath: "", ssrPath: "/_ssr" });
     const assetHandler = assetRoutes.routes.find(
-      (route) => route.path === "/:filename{.+\\.js$}",
+      (route) => route.path.endsWith("/:filename{.+\\.js$}"),
     )?.handler;
     expect(assetHandler).toBeDefined();
 

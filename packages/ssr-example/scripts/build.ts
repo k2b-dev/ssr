@@ -1,5 +1,3 @@
-process.env.NODE_ENV = "production";
-
 import { mkdirSync } from "fs";
 import { plugin } from "../config";
 

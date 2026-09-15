@@ -15,7 +15,7 @@ Monorepo root:
   - `createConfig()`
   - returns `{ config, plugin, html }`
   - injects hydration script
-  - production hydration imports use `?v=<buildTimestamp>` cache busting
+  - production modules use `/_ssr/<buildTimestamp>/<filename>` cache busting; relative lazy imports keep the same module URL
 
 - `src/transform.ts`
   - one Babel transform pass for wrapper injection, TypeScript stripping, and Solid SSR/DOM compilation

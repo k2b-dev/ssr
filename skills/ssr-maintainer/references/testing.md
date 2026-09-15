@@ -29,6 +29,7 @@ Unit tests live in `packages/ssr-core/test/unit/`:
 | `island-resolve.test.ts` | relative and alias import resolution |
 | `hono.test.ts` | `createSSRHandler`, middleware ordering, mounted Hono behavior |
 | `utils.test.ts` | basePath normalization, cache headers, safePath, reload stream lifecycle |
+| `production-assets.test.ts` | Production module graph, lazy imports, version paths, and real HTTP through all three adapters |
 | `adapter-paths.test.ts` | Bun/Elysia SSR public paths |
 | `nav.test.ts` | opt-in navigation helpers, history, scroll preservation, SSR anchor output |
 | `hash.test.ts` | hash determinism |
@@ -50,3 +51,5 @@ Browser-conditioned tests live in `packages/ssr-core/test/browser/`:
 - when adapter behavior changes, verify both default root routing and `basePath` routing
 - for request/response tests, prefer real app instances over mocking route handlers
 - for reload coordination, test separate browser realms against one shared lock manager rather than asserting a single tab in isolation
+
+The example build sets `NODE_ENV=production` before Bun starts. Setting it inside the build script is too late for Bun’s build-time environment replacement.

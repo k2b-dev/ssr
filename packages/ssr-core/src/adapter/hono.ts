@@ -6,7 +6,7 @@ import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import type { Context, Env, Handler, MiddlewareHandler, TypedResponse } from "hono";
 import type { SsrConfig, HtmlFn, RenderFn } from "../index";
-import { createAssetResponse, createPingResponse, getSsrDir, createReloadResponse } from "./utils";
+import { createAssetResponse, getAssetPrefix, createPingResponse, getSsrDir, createReloadResponse } from "./utils";
 
 // ============================================================================
 // Types
@@ -183,8 +183,9 @@ export const routes = (config: SsrConfig) => {
     return createAssetResponse(c.req.raw, ssrDir, filename, dev);
   };
 
-  app.get("/:filename{.+\\.js$}", serveAsset);
-  app.get("/:filename{.+\\.js\\.map$}", serveAsset);
+  const prefix = getAssetPrefix(dev);
+  app.get(`${prefix}/:filename{.+\\.js$}`, serveAsset);
+  app.get(`${prefix}/:filename{.+\\.js\\.map$}`, serveAsset);
 
   return app;
 };

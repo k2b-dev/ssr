@@ -3,6 +3,7 @@
  * SSE live reload, and security utilities.
  */
 import { dirname, join, resolve } from "path";
+import { statSync } from "fs";
 import type { SsrConfig } from "../index";
 
 /**
@@ -33,6 +34,18 @@ export const toSsrPath = (basePath: string): string =>
  */
 export const getSsrDir = (config: SsrConfig): string =>
   join(config.dev ? config.rootDir ?? process.cwd() : dirname(Bun.main), "_ssr");
+
+// Keep one version for this server process, including when Bun.main has no mtime.
+const buildVersion = (() => {
+  try {
+    return String(Math.floor(statSync(Bun.main).mtimeMs));
+  } catch {
+    return String(Date.now());
+  }
+})();
+
+/** Relative imports inherit a versioned directory, unlike a query string. */
+export const getAssetPrefix = (dev: boolean): string => dev ? "" : `/${buildVersion}`;
 
 const HASHED_CHUNK = /^chunk-[a-z0-9]+\.js$/i;
 const ASSET_FILE = /^[a-z0-9._-]+\.js(?:\.map)?$/i;

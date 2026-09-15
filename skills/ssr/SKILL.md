@@ -179,6 +179,7 @@ Notes:
 - `basePath` moves SSR asset URLs and dev endpoints under that public prefix
 - development builds use linked source maps by default; use `devSourcemap: "inline"` only for tools that require embedded maps
 - stable development entries and source maps revalidate; content-hashed chunks and all production assets use immutable caching
+- production module URLs use a build timestamp directory under `config.ssrPath`; relative imports retain the same version, and adapters reject other versions
 - `html()` accepts a synchronous render function: `html(() => <Page />)`
 - `html()` always injects framework assets, including the SSR loader and wrapper styling
 

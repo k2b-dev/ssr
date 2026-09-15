@@ -55,7 +55,7 @@ SPA routing.
 - Monorepo support via `rootDir`
 - Public path mounting via `basePath` for microfrontends
 - Stable file-path-based island IDs (collision-safe across workspace packages)
-- Production chunk cache busting (`/_ssr/*.js?v=<buildTimestamp>`)
+- Production module cache busting (`/_ssr/<buildTimestamp>/*.js`)
 - Linked development source maps and validator-aware asset delivery
 - Stale generated island assets removed after successful builds
 - Visibility-aware development reload with cross-tab SSE coordination
@@ -334,8 +334,8 @@ createConfig({
 Use the same configuration in development and production. Files outside `rootDir` retain the existing canonical absolute-path ID fallback; moving an external package can change its IDs. SSR wrappers and browser assets must come from the same build.
 - `basePath` moves SSR assets and dev endpoints under that prefix, e.g. `/docs/_ssr`.
 - Development builds emit linked source maps by default. Use `"inline"` only when a tool requires embedded maps, or `"none"` to disable them.
-- In production, hydration imports include a build timestamp query (`?v=...`) for cache busting.
-- All adapters stream island assets from `Bun.file`. Production assets and content-hashed development chunks are immutable; stable development entries and source maps use validators for inexpensive freshness checks.
+- In production, all modules share a build timestamp directory (`/_ssr/<version>/<id>.js`). Relative lazy imports inherit that directory, so each module has one URL. Files stay flat on disk; adapters serve only the current build version.
+- All adapters stream island assets from `Bun.file`. Production assets under the versioned path and content-hashed development chunks are immutable; stable development entries and source maps use validators for inexpensive freshness checks.
 - Production adapters serve adjacent `.br` or `.gz` files when accepted by the request, preserving the original MIME type and varying caches by `Accept-Encoding`. Generate these siblings in the application build; the adapter does not compress responses at runtime. Development always serves the original file to avoid stale compressed copies.
 
 ## Microfrontend mount example
@@ -360,6 +360,12 @@ export default new Hono().route("/docs", docsApp);
 With this setup, hydration chunks and dev endpoints are served from `/docs/_ssr/...`.
 
 ## Build for production
+
+Set the environment before starting Bun so both the build configuration and bundled code use production mode:
+
+```bash
+NODE_ENV=production bun scripts/build.ts
+```
 
 ```ts
 // scripts/build.ts

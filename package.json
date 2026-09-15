@@ -10,5 +10,6 @@
     "dev:example": "bun run --filter ssr-example dev",
     "build:example": "bun run --filter ssr-example build",
     "start:example": "bun run --filter ssr-example start"
-  }
+  },
+  "packageManager": "bun@1.4.2"
 }

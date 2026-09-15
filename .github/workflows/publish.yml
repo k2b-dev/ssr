@@ -1,6 +1,8 @@
 name: Publish Package
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -10,10 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
+        with:
+          bun-version: "1.4.2"
+      - run: bun install --frozen-lockfile
       - run: bun run --filter @k2b/ssr test
+      - run: bun run build:example
 
   publish:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     needs: test
     permissions:

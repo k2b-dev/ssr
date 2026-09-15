@@ -6,6 +6,7 @@ import { Elysia } from "elysia";
 import type { SsrConfig } from "../index";
 import {
   createAssetResponse,
+  getAssetPrefix,
   createPingResponse,
   getSsrDir,
   createReloadResponse,
@@ -27,13 +28,14 @@ import {
 export const routes = (config: SsrConfig) => {
   const { dev, ssrPath } = config;
   const ssrDir = getSsrDir(config);
+  const assetPath = ssrPath + getAssetPrefix(dev);
 
   return new Elysia({ name: "ssr" })
     .get(`${ssrPath}/_reload`, ({ request }) =>
       dev ? createReloadResponse(request.signal) : notFound(),
     )
     .get(`${ssrPath}/_ping`, () => (dev ? createPingResponse() : notFound()))
-    .get(`${ssrPath}/*`, ({ request, params }) =>
+    .get(`${assetPath}/*`, ({ request, params }) =>
       createAssetResponse(request, ssrDir, params["*"], dev),
     );
 };
