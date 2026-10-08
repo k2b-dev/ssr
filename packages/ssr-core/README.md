@@ -233,9 +233,9 @@ export default function Tabs() {
 
 `Link` renders a real `<a href>` during SSR. Enhanced clicks only run in the
 browser for same-origin, left-click navigation without modifier keys. Without
-`onNavigate`, `Link` calls `navigate()` directly and only updates browser
-history. With `onNavigate`, the island owns data loading and state updates, then
-calls `nav.push()`, `nav.replaceWith()`, or `nav.fallback()`.
+`onNavigate`, the anchor keeps native document navigation and ignores `replace`
+and `scroll`. With `onNavigate`, the island owns data loading and state updates,
+then calls `nav.push()`, `nav.replaceWith()`, or `nav.fallback()`.
 
 Use `listenPopState()` whenever `nav.push()` represents client state. Browser
 Back/Forward changes history but cannot infer how an island maps the URL back to
@@ -246,7 +246,7 @@ Navigation behavior:
 
 - reactive anchor props remain reactive after `Link` renders
 - same-document hash links retain native target scrolling unless `onNavigate`
-  or `scroll` explicitly takes ownership
+  explicitly takes ownership
 - relative URLs follow `document.baseURI`
 - cross-origin `navigate()` calls use full document navigation
 - replace navigation preserves existing `history.state` unless `state` is set

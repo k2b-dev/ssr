@@ -106,9 +106,25 @@ describe("@k2b/ssr/nav browser behavior", () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
+  test("leaves handlerless links to native document navigation", () => {
+    const pushState = spyOn(window.history, "pushState");
+    const anchor = mountLink({ href: "/target", replace: true, scroll: "preserve", children: "target" });
+
+    const event = click(anchor);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(pushState).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe("/target");
+    pushState.mockRestore();
+  });
+
   test("uses the browser-resolved anchor URL for enhanced navigation", async () => {
     setUrl("https://example.test/current/page");
-    const anchor = mountLink({ href: "child?tab=two", children: "child" });
+    const anchor = mountLink({
+      href: "child?tab=two",
+      onNavigate: (navigation) => navigation.push(),
+      children: "child",
+    });
     Object.defineProperty(anchor, "href", {
       configurable: true,
       value: "https://example.test/base/child?tab=two",
