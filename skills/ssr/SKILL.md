@@ -257,10 +257,11 @@ Rules:
 
 - `Link` is a real SSR-safe `<a href>` and works without JavaScript as a normal link
 - this is not a router; do not expect route matching, nested routes, loaders, or server re-rendering
+- without `onNavigate`, `Link` keeps native document navigation; `replace` and `scroll` only apply to enhanced clicks
 - with `onNavigate`, update island state or load data first, then call `nav.push()`, `nav.replaceWith()`, or `nav.fallback()`
 - when using `nav.push()`, subscribe with `listenPopState()` and restore island state from the URL on Back/Forward
 - rejected async `onNavigate` callbacks fall back to full document navigation
-- same-document hash links retain native scrolling unless `onNavigate` or `scroll` takes ownership
+- same-document hash links retain native scrolling unless `onNavigate` takes ownership
 - relative links follow `document.baseURI`; cross-origin `navigate()` calls use full document navigation
 - replace navigation preserves existing `history.state` unless an explicit `state` option is provided
 - use `data-scroll-preserve="stable-key"` for scroll containers that should keep position

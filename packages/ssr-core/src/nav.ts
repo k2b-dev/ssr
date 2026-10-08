@@ -50,9 +50,12 @@ export type LinkNavigateEvent = {
 
 export type LinkProps = Omit<AnchorProps, "href" | "onClick"> & {
   href: string;
+  /** Default history mode for enhanced clicks. Ignored without `onNavigate`. */
   replace?: boolean;
+  /** Default scroll mode for enhanced clicks. Ignored without `onNavigate`. */
   scroll?: NavigationScrollMode;
   onClick?: JSX.EventHandlerUnion<HTMLAnchorElement, MouseEvent>;
+  /** Enables enhanced same-origin clicks. Without it, `Link` is a native anchor. */
   onNavigate?: (event: LinkNavigateEvent) => void | Promise<void>;
 };
 
@@ -200,11 +203,6 @@ const shouldEnhanceClick = (event: MouseEvent, anchor: HTMLAnchorElement): boole
   return url.origin === window.location.origin;
 };
 
-const isSameDocumentHash = (url: URL): boolean => {
-  const current = new URL(window.location.href);
-  return url.hash.length > 0 && url.pathname === current.pathname && url.search === current.search;
-};
-
 const callUserClick = (handler: LinkProps["onClick"], event: MouseEvent, anchor: HTMLAnchorElement): void => {
   if (!handler) return;
   const typedEvent = event as MouseEvent & { currentTarget: HTMLAnchorElement; target: Element };
@@ -227,14 +225,12 @@ export function Link(props: LinkProps) {
 
   const handleClick: JSX.EventHandler<HTMLAnchorElement, MouseEvent> = (event) => {
     callUserClick(local.onClick, event, event.currentTarget);
+    const onNavigate = local.onNavigate;
+    if (!onNavigate) return;
     if (!shouldEnhanceClick(event, event.currentTarget)) return;
 
     const href = local.href;
     const url = new URL(event.currentTarget.href);
-
-    // Preserve native target scrolling unless the application explicitly owns
-    // this hash navigation through onNavigate or a scroll option.
-    if (!local.onNavigate && local.scroll === undefined && isSameDocumentHash(url)) return;
 
     const scroll = local.scroll ?? "top";
     const replace = Boolean(local.replace);
@@ -242,15 +238,10 @@ export function Link(props: LinkProps) {
 
     event.preventDefault();
 
-    if (!local.onNavigate) {
-      navigate(url.href, { replace, scroll, scrollSnapshot });
-      return;
-    }
-
     let navigationOutcome: "none" | "history" | "document" = "none";
     const runNavigation = async () => {
       try {
-        await local.onNavigate!({
+        await onNavigate({
           event,
           href,
           url,

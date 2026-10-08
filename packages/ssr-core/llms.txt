@@ -42,6 +42,7 @@ Monorepo root:
   - exports `Link`, `navigate`, `listenPopState`, document navigation helpers, scroll snapshot helpers, and view-transition wrapper
   - not a router; no route matching, loaders, or server page re-rendering
   - apps using `nav.push()` must reconcile island state from `listenPopState()` on Back/Forward
+  - `Link` without `onNavigate` keeps native document navigation; enhanced clicks require `onNavigate`
   - same-document hashes retain native scrolling; relative URLs follow `document.baseURI`
   - cross-origin targets and failed async navigation fall back to document navigation
 
