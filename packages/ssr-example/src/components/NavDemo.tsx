@@ -1,5 +1,5 @@
 import { ssr } from "../../config";
-import { ManualSection, ManualShell } from "./ManualShell";
+import { ShowcaseSection, ShowcaseShell } from "./ShowcaseShell";
 import NavDemoIsland from "./NavDemo.island";
 
 type View = "alpha" | "beta";
@@ -13,29 +13,29 @@ export default ssr(async (c) => {
   const initialView = parseView(c.req.query("view"));
 
   return () => (
-    <ManualShell
+    <ShowcaseShell
       active="navigation"
-      title="navigation"
-      summary="Progressively enhanced links that preserve local island state."
+      title="Client navigation"
+      summary="Change the URL and content without discarding island or scroll state."
     >
-      <ManualSection label="NAME">
-        <p>
-          <strong>navigation</strong> — update the URL and visible dataset
-          without replacing the document.
-        </p>
-      </ManualSection>
-
-      <ManualSection label="DEMO">
+      <ShowcaseSection
+        label="Live navigation"
+        description="Increment, scroll and switch views. Then use browser Back and Forward."
+        runtime="island"
+      >
         <NavDemoIsland initialView={initialView} />
-      </ManualSection>
+      </ShowcaseSection>
 
-      <ManualSection label="BEHAVIOR">
-        <p>
-          Scroll the dataset, increment the counter and switch views. Browser
-          Back and Forward reconcile the active view from the URL while the
-          island keeps its local state.
-        </p>
-      </ManualSection>
-    </ManualShell>
+      <ShowcaseSection
+        label="What this demonstrates"
+        description="The links remain valid anchors before JavaScript loads."
+      >
+        <ul class="behavior-list">
+          <li><strong>Real URLs</strong><span>Each view is addressable and reloadable.</span></li>
+          <li><strong>History</strong><span>Back and Forward update the active view.</span></li>
+          <li><strong>Preserved state</strong><span>Counter and keyed scroll regions survive navigation.</span></li>
+        </ul>
+      </ShowcaseSection>
+    </ShowcaseShell>
   );
 });
