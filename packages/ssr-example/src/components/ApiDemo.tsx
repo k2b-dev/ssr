@@ -1,31 +1,31 @@
 import { ssr } from "../../config";
 import ApiFetchIsland from "./ApiFetch.island";
-import { ManualSection, ManualShell } from "./ManualShell";
+import { ShowcaseSection, ShowcaseShell } from "./ShowcaseShell";
 
 export default ssr(async (c) => {
-  c.get("page").title = "Hono API · @k2b/ssr";
+  c.get("page").title = "API example · @k2b/ssr";
 
   return () => (
-    <ManualShell
+    <ShowcaseShell
       active="api"
-      title="hono-api"
-      summary="A typed client request inside one isolated browser boundary."
+      title="API example"
+      summary="Run a request from an island through a type-safe Hono client."
     >
-      <ManualSection label="NAME">
-        <p>
-          <strong>hono-api</strong> — call a Hono endpoint without adding client
-          state to the surrounding page.
-        </p>
-      </ManualSection>
-
-      <ManualSection label="REQUEST">
+      <ShowcaseSection
+        label="Live request"
+        description="The request control and response are the only interactive part of this page."
+        runtime="island"
+      >
         <ApiFetchIsland />
-      </ManualSection>
+      </ShowcaseSection>
 
-      <ManualSection label="CONTRACT">
-        <dl class="definition-list">
+      <ShowcaseSection
+        label="Type contract"
+        description="The client infers routes and response types from the server app."
+      >
+        <dl class="contract-list">
           <div>
-            <dt>Transport</dt>
+            <dt>Client</dt>
             <dd>
               <code>hc&lt;ApiType&gt;</code>
             </dd>
@@ -37,11 +37,21 @@ export default ssr(async (c) => {
             </dd>
           </div>
           <div>
-            <dt>Browser scope</dt>
-            <dd>Request control and response output only</dd>
+            <dt>Response</dt>
+            <dd>
+              <code>{"{ message: string; time: number }"}</code>
+            </dd>
           </div>
         </dl>
-      </ManualSection>
-    </ManualShell>
+      </ShowcaseSection>
+
+      <ShowcaseSection label="Server route" runtime="server">
+        <pre class="code-sample">
+          <code>{`export const api = new Hono().get("/msg", (c) =>
+  c.json({ message: "Hello from Hono!", time: Date.now() }),
+);`}</code>
+        </pre>
+      </ShowcaseSection>
+    </ShowcaseShell>
   );
 });

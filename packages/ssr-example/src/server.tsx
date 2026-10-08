@@ -5,7 +5,6 @@ import { routes } from "@k2b/ssr/hono";
 import { config } from "../config";
 import { api } from "./api";
 import Home from "./components/Home";
-import About from "./components/About";
 import ApiDemo from "./components/ApiDemo";
 import NavDemo from "./components/NavDemo";
 
@@ -15,7 +14,6 @@ const app = new Hono()
   .route("/api", api)
   .use("/public/*", serveStatic({ root: "./" }))
   .get("/", ...Home)
-  .get("/about", ...About)
   .get("/api-test", ...ApiDemo)
   .get("/nav-demo", ...NavDemo);
 
