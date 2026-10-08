@@ -33,6 +33,7 @@ bun run dev:example
 
 - `.island.tsx` and `.client.tsx` must use default exports
 - nested island/client imports are unsupported and should stay treated as invalid usage
+- every island/client instance mounts through `src/mount.ts` in its own error boundary; protection must never depend on the optional `errorFallback`
 - props must be `seroval`-serializable; this is broader than plain JSON but still excludes functions, callbacks, event handlers, Solid signals/stores, DOM nodes, and arbitrary class instances
 - Since v0.9.0, `html()` and `ssr()` must keep JSX creation inside synchronous render functions so Solid SSR context exists for primitives like `createUniqueId()`
 - `_ssr/` is the filesystem artifact boundary; the public HTTP path is derived separately via `config.ssrPath`

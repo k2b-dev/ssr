@@ -20,6 +20,7 @@ Published as `@k2b/ssr`.
 - microfrontend support via `basePath`
 - linked development source maps and cache-aware asset delivery
 - visibility-aware development reload with one cross-tab SSE owner when Web Locks are available
+- a default error boundary for every island and client component instance
 
 See the full package docs in [packages/ssr-core/README.md](packages/ssr-core/README.md).
 

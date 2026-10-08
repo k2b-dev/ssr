@@ -39,6 +39,7 @@ Browser-conditioned tests live in `packages/ssr-core/test/browser/`:
 | File | Focus |
 |---|---|
 | `nav.browser.test.ts` | reactive links, native click behavior, async fallback, view transitions |
+| `island-errors.browser.test.ts` | default error boundary, per-element isolation, shared-signal updates, events and reporting, retry, `errorFallback` |
 | `client-reload.browser.test.ts` | visibility lifecycle, retry cancellation, stale reload IDs, Web Locks contention and leadership handoff |
 
 `setup.ts` registers Happy DOM globals for the browser-conditioned suite.

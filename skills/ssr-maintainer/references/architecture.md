@@ -16,7 +16,7 @@
 2. Generate stable IDs with `islandIdFromFile()`
 3. Fail fast on collisions
 4. Run one `Bun.build()` pass with virtual island entrypoints and `splitting: true`
-5. Generate per-entry hydration code that imports the component, `solid-js/web`, and `seroval`
+5. Generate per-entry code that imports the component and the shared `src/mount.ts` runtime (plus the optional `errorFallback` module) and calls `mount(C, selector, Fallback?)`; code splitting keeps the runtime in the shared chunk
 6. After a successful build, remove obsolete framework-generated JavaScript and source-map files
 7. In production only, run `dedupeSharedChunkExports()` on shared chunks
 
@@ -51,6 +51,17 @@ Production builds do not emit source maps. Development builds use linked maps by
 - compiles Solid with `babel-preset-solid`
 - uses `generate: "ssr"` or `generate: "dom"`
 - keeps `hydratable: false`, so client islands re-render rather than hydrate existing DOM
+
+## Mount Runtime
+
+`mount()` in `src/mount.ts` runs in the browser:
+
+- each wrapper element gets its own `render()` root with a root `ErrorBoundary`; props are deserialized inside the boundary
+- one failing element never stops the loop; a last-resort `try/catch` covers failures outside the boundary
+- the default fallback is plain DOM (`role="alert"`, `data-ssr-error`, a "Try again" button calling `reset()`)
+- each caught error dispatches a bubbling, cancelable `ssr:island-error` event and calls `reportError()` unless cancelled; Solid does not log errors handled by a function fallback
+- a configured `errorFallback` component renders inside a nested boundary whose fallback is the built-in one
+- with a handler on every root, Solid no longer rethrows into the signal writer, so a failing island does not abort updates of other islands
 
 ## Island ID System
 
