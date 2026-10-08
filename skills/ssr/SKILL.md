@@ -318,4 +318,4 @@ Rules:
 - using `nav.push()` without reconciling `popstate` leaves island state stale after Back/Forward; use `listenPopState()`
 - importing server-only modules into islands or client components can break browser bundling
 - named exports for islands/clients are not supported
-- calling `reset()` synchronously inside an `ssr:island-error` listener retries before the fallback has rendered; keep `reset` for a later user action or retry
+- calling `reset()` inside an `ssr:island-error` listener retries immediately, so a component that keeps failing loops; keep `reset` for a user action or a bounded, delayed retry
