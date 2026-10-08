@@ -15,6 +15,8 @@ import { getAssetPrefix, getReloadId, normalizeBasePath, toSsrPath } from "./ada
 // @ts-ignore - Bun text import
 import devClientCode from "./adapter/client.js" with { type: "text" };
 
+export type { IslandErrorProps } from "./mount";
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -41,6 +43,8 @@ export type SsrOptions<T extends object = object> = {
   external?: string[];
   /** Development island sourcemaps (default: "linked") */
   devSourcemap?: DevSourcemap;
+  /** Path relative to rootDir (or absolute) to a default-exported Solid component receiving IslandErrorProps. */
+  errorFallback?: string;
   /** HTML template function (optional, has default) */
   template?: (
     ctx: {
@@ -107,6 +111,7 @@ export const createConfig = <T extends object = object>(options: SsrOptions<T> =
     verbose,
     external,
     devSourcemap = "linked",
+    errorFallback,
     template,
     rootDir: rootDirOption,
     componentRoots,
@@ -200,6 +205,7 @@ export const createConfig = <T extends object = object>(options: SsrOptions<T> =
             dev,
             devSourcemap,
             external,
+            errorFallback: errorFallback ? resolve(rootDir, errorFallback) : undefined,
           });
         };
 

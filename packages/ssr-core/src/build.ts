@@ -95,8 +95,9 @@ export const buildIslands = async (options: {
   dev?: boolean;
   devSourcemap?: DevSourcemap;
   external?: string[];
+  errorFallback?: string;
 }): Promise<void> => {
-  const { pattern, outdir, cwd, componentRoots, verbose, dev = false, devSourcemap = "linked", external } = options;
+  const { pattern, outdir, cwd, componentRoots, verbose, dev = false, devSourcemap = "linked", external, errorFallback } = options;
   const resolvedCwd = resolve(cwd);
 
   const totalStart = performance.now();
@@ -200,7 +201,7 @@ export const buildIslands = async (options: {
             }
 
             return {
-              contents: `import{render,createComponent}from"solid-js/web";import{deserialize}from"seroval";import C from"${component.path}";document.querySelectorAll('${component.selector}').forEach(e=>{e.innerHTML="";render(()=>createComponent(C,deserialize(e.dataset.props||"{}")),e)})`,
+              contents: `import{mount}from${JSON.stringify(join(import.meta.dir, "mount.ts"))};import C from${JSON.stringify(component.path)};${errorFallback ? `import F from${JSON.stringify(errorFallback)};` : ""}mount(C,${JSON.stringify(component.selector)}${errorFallback ? ",F" : ""})`,
               loader: "js",
             };
           });

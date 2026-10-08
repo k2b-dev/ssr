@@ -1,6 +1,6 @@
 ---
 name: ssr
-description: Build apps with @k2b/ssr, the minimal SolidJS islands SSR framework for Bun. Use when creating pages, islands, client components, templates, opt-in @k2b/ssr/nav progressive navigation, or adapter setup with Hono, Bun, or Elysia, and when troubleshooting SSR asset loading, source maps, caching, dev reload connections, serialization, client re-render behavior, or enhanced same-origin links.
+description: Build apps with @k2b/ssr, the minimal SolidJS islands SSR framework for Bun. Use when creating pages, islands, client components, templates, opt-in @k2b/ssr/nav progressive navigation, or adapter setup with Hono, Bun, or Elysia, and when troubleshooting SSR asset loading, source maps, caching, dev reload connections, serialization, client re-render behavior, island error fallbacks, or enhanced same-origin links.
 ---
 
 # @k2b/ssr User Guide
@@ -112,6 +112,31 @@ Good:
 
 Put interactive behavior inside the island/client component. For server effects, pass serializable data such as IDs, URLs, action names, or initial state, then call an API route, submit a form, or update client state from inside the island.
 
+## Island Error Boundaries
+
+Every island and client component instance is mounted in its own error boundary by default. Do not add a root `ErrorBoundary` to each island just for protection.
+
+- an error while mounting, deserializing props, or in a later reactive update replaces only that instance with `<div role="alert" data-ssr-error>` and a **Try again** button
+- other instances and other islands updated by the same signal write keep working
+- **Try again** (or `reset()`) remounts the component with fresh state from the same `data-props`
+- each caught error dispatches a bubbling, cancelable `ssr:island-error` event on the wrapper element with `detail: { error, id, reset }`, then calls `reportError(error)` unless a listener called `preventDefault()`
+- `preventDefault()` only suppresses the report; use it when the app sends errors to its own reporter
+- style the default fallback through `[data-ssr-error]`
+- for localized or branded fallbacks, set `createConfig({ errorFallback: "./src/IslandError.tsx" })`; its default export receives `IslandErrorProps` (`{ error, reset }`) from `@k2b/ssr`; if it throws, the default fallback is used
+- boundaries inside a component still take precedence; errors thrown directly in event handlers or async callbacks outside a Solid computation remain normal uncaught errors
+
+```tsx
+import type { IslandErrorProps } from "@k2b/ssr";
+
+export default function IslandError(props: IslandErrorProps) {
+  return (
+    <p role="alert">
+      Could not load this section. <button type="button" onClick={props.reset}>Retry</button>
+    </p>
+  );
+}
+```
+
 ## Pages
 
 `ssr()` page handlers return a synchronous render function, not already-created JSX:
@@ -167,6 +192,7 @@ createConfig({
   basePath?: string;
   external?: string[];
   devSourcemap?: "none" | "linked" | "inline";
+  errorFallback?: string;
   template?: ({ body, scripts, ...custom }) => string | Promise<string>;
 })
 ```
@@ -177,6 +203,7 @@ Notes:
 - explicit `componentRoots` replace the default scan; relative paths resolve against `rootDir`, absolute package paths are supported, `[]` selects nothing, and missing paths fail
 - ordinary UI libraries with browser/SSR exports are bundled through imports and need no discovery root; explicitly select only packages that ship island/client source files
 - `basePath` moves SSR asset URLs and dev endpoints under that public prefix
+- `errorFallback` optionally points to a fallback module relative to `rootDir`; islands are protected without it
 - development builds use linked source maps by default; use `devSourcemap: "inline"` only for tools that require embedded maps
 - stable development entries and source maps revalidate; content-hashed chunks and all production assets use immutable caching
 - production module URLs use a build timestamp directory under `config.ssrPath`; relative imports retain the same version, and adapters reject other versions
@@ -291,3 +318,4 @@ Rules:
 - using `nav.push()` without reconciling `popstate` leaves island state stale after Back/Forward; use `listenPopState()`
 - importing server-only modules into islands or client components can break browser bundling
 - named exports for islands/clients are not supported
+- calling `reset()` inside an `ssr:island-error` listener retries immediately, so a component that keeps failing loops; keep `reset` for a user action or a bounded, delayed retry

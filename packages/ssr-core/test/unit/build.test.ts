@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, resolve } from "path";
 import { routes as honoRoutes } from "../../src/adapter/hono";
 import { buildIslands, dedupeSharedChunkExports } from "../../src/build";
 import { islandIdFromFile } from "../../src/island-id";
@@ -64,12 +64,32 @@ describe("buildIslands()", () => {
     const entrySource = readFileSync(entryChunk, "utf8");
     expect(entrySource).toContain(`//# sourceMappingURL=${id}.js.map`);
     expect(entrySource).not.toContain("sourceMappingURL=data:");
+    expect(JSON.parse(readFileSync(sourceMap, "utf8")).sourcesContent.join("\n")).toContain(
+      `import{mount}from${JSON.stringify(resolve(import.meta.dir, "../../src/mount.ts"))}`,
+    );
 
     const app = honoRoutes({ dev: true, rootDir: workspaceRoot, basePath: "", ssrPath: "/_ssr" });
     const response = await app.request(`/${id}.js`);
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/javascript");
+  });
+
+  test("multiple entries share one mount runtime", async () => {
+    const workspaceRoot = makeTempRoot();
+    const outdir = join(workspaceRoot, "_ssr");
+    const files = ["First.island.tsx", "Second.client.tsx"];
+    for (const file of files) writeTempFile(join(workspaceRoot, file), `export default () => <b>Ready</b>;`);
+    await buildIslands({ pattern: "**/*.{island,client}.tsx", cwd: workspaceRoot, outdir, verbose: false, dev: true });
+
+    const chunks = [...new Bun.Glob("chunk-*.js").scanSync({ cwd: outdir, absolute: true })];
+    const sharedSource = chunks.map((file) => readFileSync(file, "utf8")).join("\n");
+    expect(sharedSource.match(/This part of the page could not be displayed\./g)).toHaveLength(1);
+    for (const file of files) {
+      const entrySource = readFileSync(join(outdir, `${islandIdFromFile(join(workspaceRoot, file), workspaceRoot)}.js`), "utf8");
+      expect(entrySource).toMatch(/import\s*\{[^}]*\bmount\b[^}]*\}\s*from\s*"\.\/chunk-/);
+      expect(entrySource).not.toContain("This part of the page could not be displayed.");
+    }
   });
 
   test("supports explicit inline development source maps", async () => {
@@ -241,12 +261,16 @@ describe("buildIslands()", () => {
     );
 
     writeTempFile(join(workspaceRoot, "unrelated", "Invalid.island.tsx"), "invalid source");
+    writeTempFile(join(workspaceRoot, "IslandError.tsx"), `
+      export default (props: { error: unknown; reset: () => void }) => <button onClick={props.reset}>Configured fallback</button>;
+    `);
     const { plugin } = createConfig({
       componentRoots: ["src"],
       dev: false,
       rootDir: workspaceRoot,
       verbose: false,
       external: ["solid-js/web", "seroval"],
+      errorFallback: "./IslandError.tsx",
     });
     const result = await Bun.build({
       entrypoints: [entryPath],
@@ -263,6 +287,7 @@ describe("buildIslands()", () => {
 
     const id = islandIdFromFile(islandPath, workspaceRoot);
     expect(existsSync(join(outdir, "_ssr", `${id}.js`))).toBe(true);
+    expect(readFileSync(join(outdir, "_ssr", `${id}.js`), "utf8")).toContain("Configured fallback");
     expect(readFileSync(join(outdir, "server.js"), "utf8")).toContain(id);
   });
 

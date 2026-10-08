@@ -31,6 +31,13 @@ Monorepo root:
   - hard-fails on ID collisions
   - emits linked development source maps by default and removes stale generated assets after successful builds
 
+- `src/mount.ts`
+  - shared browser mount runtime imported by every generated island/client entry
+  - mounts each wrapper element in its own Solid `ErrorBoundary`; props are deserialized inside it
+  - default fallback `<div role="alert" data-ssr-error>` with a "Try again" button that remounts
+  - dispatches a bubbling, cancelable `ssr:island-error` event (`detail: { error, id, reset }`) and calls `reportError()` unless cancelled
+  - optional `createConfig({ errorFallback })` module receives `IslandErrorProps`; protection never depends on it
+
 - `src/adapter/*`
   - Bun, Hono, Elysia adapters
   - serve built chunks from `config.ssrPath`
