@@ -1,5 +1,10 @@
 # SSR Monorepo
 
+> [!IMPORTANT]
+> **This repository is archived.** `@k2b/ssr` is now developed in the Cloud monorepo at
+> [`packages/ssr`](https://github.com/k2b-dev/cloud/tree/main/packages/ssr) and published from there
+> (release tags `npm-ssr-v*`). Open issues and pull requests in [k2b-dev/cloud](https://github.com/k2b-dev/cloud).
+
 Minimal SSR + islands for SolidJS on Bun.
 
 Development and CI use Bun 1.4.2. Install workspace dependencies with `bun install --frozen-lockfile`.
